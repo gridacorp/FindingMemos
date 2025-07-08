@@ -1,2 +1,2 @@
-# findingmemos
-buscador de palabras clave en pdf, muestra contexto 
+# FindingMemos
+Aplicación en Python con interfaz gráfica (Tkinter) que permite seleccionar archivos PDF, buscar palabras clave dentro de ellos y mostrar el contexto donde aparecen. Los resultados se pueden visualizar y exportar a un archivo de texto. Usa la librería pdfplumber para extraer el texto de los PDFs.
