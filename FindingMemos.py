@@ -3,6 +3,13 @@ from tkinter import filedialog, messagebox
 import pdfplumber
 import os
 
+# Importar la licencia
+from license import show_license_and_get_acceptance
+
+# Mostrar licencia y salir si no se acepta
+if not show_license_and_get_acceptance():
+    exit()
+
 def seleccionar_pdfs():
     archivos = filedialog.askopenfilenames(
         title="Seleccionar archivos PDF",
@@ -39,11 +46,10 @@ def buscar_palabra_clave():
                 for num_pagina, pagina in enumerate(pdf.pages, start=1):
                     texto = pagina.extract_text()
                     if texto:
-                        texto = texto.replace("\n", " ")  # Reemplaza saltos de línea para un contexto continuo
+                        texto = texto.replace("\n", " ")
                         for palabra in palabras:
                             inicio = 0
                             while (pos := texto.lower().find(palabra, inicio)) != -1:
-                                # Extraer contexto
                                 inicio_contexto = max(pos - 100, 0)
                                 fin_contexto = min(pos + len(palabra) + 100, len(texto))
                                 contexto = texto[inicio_contexto:fin_contexto].strip()
