@@ -3,12 +3,18 @@ from tkinter import filedialog, messagebox
 import pdfplumber
 import os
 
-# Importar la licencia
+# Importar la licencia y la telemetría
 from license import show_license_and_get_acceptance
+import telemetry
 
-# Mostrar licencia y salir si no se acepta
+# 1) Mostrar licencia y salir si no se acepta
 if not show_license_and_get_acceptance():
     exit()
+
+# 2) Enviar evento de inicio a Google Analytics
+telemetry.ping_ga_startup()
+
+# ---- Funciones de la aplicación ----
 
 def seleccionar_pdfs():
     archivos = filedialog.askopenfilenames(
@@ -26,7 +32,6 @@ def buscar_palabra_clave():
     if not rutas_pdfs:
         messagebox.showwarning("Advertencia", "Por favor, selecciona al menos un archivo PDF.")
         return
-
     if not palabras_clave:
         messagebox.showwarning("Advertencia", "Por favor, ingresa al menos una palabra clave.")
         return
@@ -34,7 +39,7 @@ def buscar_palabra_clave():
     try:
         resultados_text.delete("1.0", tk.END)
         rutas = rutas_pdfs.split("; ")
-        palabras = [palabra.strip().lower() for palabra in palabras_clave.split(",") if palabra.strip()]
+        palabras = [p.strip().lower() for p in palabras_clave.split(",") if p.strip()]
         resultados = []
 
         for ruta_pdf in rutas:
@@ -50,10 +55,9 @@ def buscar_palabra_clave():
                         for palabra in palabras:
                             inicio = 0
                             while (pos := texto.lower().find(palabra, inicio)) != -1:
-                                inicio_contexto = max(pos - 100, 0)
-                                fin_contexto = min(pos + len(palabra) + 100, len(texto))
-                                contexto = texto[inicio_contexto:fin_contexto].strip()
-
+                                ic = max(pos - 100, 0)
+                                fc = min(pos + len(palabra) + 100, len(texto))
+                                contexto = texto[ic:fc].strip()
                                 resultados.append(
                                     f"Archivo: {os.path.basename(ruta_pdf)}\n"
                                     f"Página {num_pagina}: ...{contexto}...\n"
@@ -87,31 +91,25 @@ def exportar_resultados():
         except Exception as e:
             messagebox.showerror("Error", f"No se pudo guardar el archivo: {e}")
 
-# Crear ventana principal
+# ---- Interfaz gráfica ----
+
 ventana = tk.Tk()
 ventana.title("Finding Memo, by Jose Sifuentes (AGU - TP)")
 
-# Etiqueta y campo para rutas de PDFs
 tk.Label(ventana, text="Archivos PDF:").grid(row=0, column=0, padx=10, pady=5)
 ruta_entry = tk.Entry(ventana, width=50)
 ruta_entry.grid(row=0, column=1, padx=10, pady=5)
 tk.Button(ventana, text="Seleccionar", command=seleccionar_pdfs).grid(row=0, column=2, padx=10, pady=5)
 
-# Etiqueta y campo para palabras clave
 tk.Label(ventana, text="Palabras clave (separadas por comas):").grid(row=1, column=0, padx=10, pady=5)
 palabra_entry = tk.Entry(ventana, width=50)
 palabra_entry.grid(row=1, column=1, padx=10, pady=5)
-
-# Botón para buscar
 tk.Button(ventana, text="Buscar", command=buscar_palabra_clave).grid(row=1, column=2, padx=10, pady=5)
 
-# Área de resultados
 tk.Label(ventana, text="Resultados:").grid(row=2, column=0, padx=10, pady=5, sticky="nw")
 resultados_text = tk.Text(ventana, width=70, height=20)
 resultados_text.grid(row=2, column=1, columnspan=2, padx=10, pady=5)
 
-# Botón para exportar resultados
 tk.Button(ventana, text="Exportar Resultados", command=exportar_resultados).grid(row=3, column=1, pady=10)
 
-# Iniciar la aplicación
 ventana.mainloop()
